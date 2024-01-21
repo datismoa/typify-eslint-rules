@@ -115,9 +115,9 @@ export const compileRule = async (rule: RuleAlikeWithSchema, name: string, jsttO
   const schemas = [rawSchema].flat(1) as JSONSchema4[]
 
   for (const [id, schema] of Object.entries(schemas)) {
-    relinkItemRefsOnSchema(schema)
+    const relinkedSchema = relinkItemRefsOnSchema(structuredClone(schema))
 
-    deferredSchemasCompiling.push(compileSchema(schema, `Schema${id}`, jsttOptions))
+    deferredSchemasCompiling.push(compileSchema(relinkedSchema, `Schema${id}`, jsttOptions))
   }
 
   const compiledSchemas = await Promise.all(deferredSchemasCompiling)

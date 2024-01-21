@@ -57,4 +57,6 @@ export const relinkItemRefsOnSchema = (schema: JSONSchema4) => {
       referenceStack.push(value)
     }
   }
+
+  return schema
 }
