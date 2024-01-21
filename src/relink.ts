@@ -15,7 +15,7 @@ const isExitAction = (value: unknown): value is ExitAction => {
   return isObject(value) && Reflect.get(value, 'action') === 'exit'
 }
 
-const isChangeReferenceAction = (value: unknown): value is PopReferenceAction => {
+const isPopReferenceAction = (value: unknown): value is PopReferenceAction => {
   return isObject(value) && Reflect.get(value, 'action') === 'popReference'
 }
 
@@ -32,7 +32,7 @@ export const relinkItemRefsOnSchema = (schema: JSONSchema4) => {
       break
     }
 
-    if (isChangeReferenceAction(head)) {
+    if (isPopReferenceAction(head)) {
       referenceStack.pop()
 
       continue
