@@ -4,7 +4,7 @@
 
 This package allows you to generate typescript types for any ESLint rules based on their meta schema
 
-### Instal
+### Install
 
 Using pnpm:
 ```sh
