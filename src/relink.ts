@@ -43,7 +43,7 @@ export const relinkItemRefsOnSchema = (schema: JSONSchema4) => {
     const value = reference[head]
 
     if (typeof value === 'string' && value.startsWith(badPrefix)) {
-      reference[head] = '#/' + reference[head].slice(badPrefix.length)
+      reference[head] = '#/' + value.slice(badPrefix.length)
     }
 
     else if (typeof value === 'object' && value !== null) {
