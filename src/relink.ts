@@ -7,16 +7,22 @@ type Action =
 type ExitAction = { action: 'exit' }
 type PopReferenceAction = { action: 'popReference' }
 
-const isObject = (value: unknown): value is Record<PropertyKey, unknown> => {
+type SimpleObject = Record<PropertyKey, unknown>
+
+const isObject = (value: unknown): value is SimpleObject => {
   return !!value && typeof value === 'object' 
 }
 
+const actionIs = (value: SimpleObject, action: Action['action']) => {
+  return Reflect.get(value, 'action') === action
+}
+
 const isExitAction = (value: unknown): value is ExitAction => {
-  return isObject(value) && Reflect.get(value, 'action') === 'exit'
+  return isObject(value) && actionIs(value, 'exit')
 }
 
 const isPopReferenceAction = (value: unknown): value is PopReferenceAction => {
-  return isObject(value) && Reflect.get(value, 'action') === 'popReference'
+  return isObject(value) && actionIs(value, 'popReference')
 }
 
 export const relinkItemRefsOnSchema = (schema: JSONSchema4) => {
@@ -46,7 +52,7 @@ export const relinkItemRefsOnSchema = (schema: JSONSchema4) => {
       reference[head] = '#/' + value.slice(badPrefix.length)
     }
 
-    else if (typeof value === 'object' && value !== null) {
+    else if (isObject(value)) {
       stack.push({ action: 'popReference' }, ...Object.keys(value))
       referenceStack.push(value)
     }
