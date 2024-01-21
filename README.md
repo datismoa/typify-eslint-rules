@@ -30,7 +30,7 @@ await typify(tsRules, {
 })
 ```
 
-This'll generate types for `@typescript-eslint/eslint-plugin` and place them in `dist/rules` folder, which are exported in `dist/index.d.ts` file under `RuleOptions` type:
+This will generate types for `@typescript-eslint/eslint-plugin` and place them in `dist/rules` folder, which are exported in `dist/index.d.ts` file under `RuleOptions` type:
 
 ```ts
 // dist/index.d.ts
