@@ -23,7 +23,7 @@ import { typify } from 'typify-eslint-rules'
 
 import tsPlugin from '@typescript-eslint/eslint-plugin'
 
-const { rules: tsRules } = ts
+const { rules: tsRules } = tsPlugin
 
 await typify(tsRules, {
   distFolder: 'dist'
