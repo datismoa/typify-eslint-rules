@@ -108,4 +108,49 @@ describe('compileRule', () => {
       `
     )
   })
+
+  it('compiles a schema which part is fully self-sufficient because of its structure', async () => {
+    const schema = [{
+      anyOf: [
+        {
+          type: 'array',
+          items: [ { enum: [ 'always' ] } ],
+          minItems: 0,
+          maxItems: 1
+        },
+        {
+          type: 'array',
+          items: [
+            { enum: [ 'never' ] },
+            {
+              type: 'object',
+              properties: { ignoreForLoopInit: { type: 'boolean' } },
+              additionalProperties: false
+            }
+          ],
+          minItems: 0,
+          maxItems: 2
+        }
+      ]
+    }] as const
+
+    const compiled = await compileRule(createAlikeRuleWithSchema(schema), 'Test', jsttOptions)
+
+    expect(compiled).toBe(
+      dedent`
+        export type Schema0 =
+          | []
+          | ['always']
+          | []
+          | ['never']
+          | [
+              'never',
+              {
+                ignoreForLoopInit?: boolean
+              }
+            ]
+        export type Test = Schema0
+      `
+    )
+  })
 })

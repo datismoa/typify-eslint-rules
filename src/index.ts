@@ -8,6 +8,7 @@ import path from 'node:path'
 
 import { parseName } from './internal'
 import { relinkItemRefsOnSchema } from './relink'
+import { isSchemaSelfSufficient } from './isSchemaSelfSufficient'
 
 export type RuleAlikeWithSchema = {
   meta: {
@@ -117,14 +118,22 @@ export const compileRule = async (rule: RuleAlikeWithSchema, name: string, jsttO
   for (const [id, schema] of Object.entries(schemas)) {
     const relinkedSchema = relinkItemRefsOnSchema(structuredClone(schema))
 
-    deferredSchemasCompiling.push(compileSchema(relinkedSchema, `Schema${id}`, jsttOptions))
+    deferredSchemasCompiling.push(
+      compileSchema(relinkedSchema, `Schema${id}`, jsttOptions)
+    )
   }
 
   const compiledSchemas = await Promise.all(deferredSchemasCompiling)
 
   const schemaIdentifiersOptional = compiledSchemas.map((_, id) => `Schema${id}?`)
 
-  const compiledRuleWrapper = `export type ${name} = [${schemaIdentifiersOptional.join(', ')}]`
+  const isFirstSchemaSelfSufficient = await isSchemaSelfSufficient(compiledSchemas[0])
+
+  const typeAnnotationToExport = isFirstSchemaSelfSufficient 
+    ? `${schemaIdentifiersOptional[0].slice(0, -1)}`
+    : `[${schemaIdentifiersOptional.join(', ')}]`
+
+  const compiledRuleWrapper = `export type ${name} = ${typeAnnotationToExport}`
 
   return compiledSchemas.join('') + compiledRuleWrapper
 }
