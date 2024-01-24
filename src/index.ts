@@ -6,7 +6,7 @@ import type { JSONSchema4 } from 'json-schema'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { parseName } from './internal'
+import { kebabToPascalCasing, parseSlashedName } from './naming'
 import { relinkItemRefsOnSchema } from './relink'
 import { isSchemaSelfSufficient } from './isSchemaSelfSufficient'
 
@@ -52,8 +52,10 @@ export const typify = async (rules: Rules, options: Options = {}, jsttOptions: P
   const deferredRulesCompiling: Promise<string>[] = []
 
   for (const [ruleName, rule] of rulesEntries) {
+    const parsedRuleName = parseSlashedName(kebabToPascalCasing(ruleName), 'upper')
+
     deferredRulesCompiling.push(
-      compileRule(rule, parseName(ruleName), gatheredJSTTOptions)
+      compileRule(rule, parsedRuleName, gatheredJSTTOptions)
     )
   }
 
@@ -71,18 +73,20 @@ export const typify = async (rules: Rules, options: Options = {}, jsttOptions: P
   for (const [ruleId, compiledRule] of Object.entries(compiledRules)) {
     const originalRuleName = rulesEntries[+ruleId][0]
 
+    const ruleFileName = parseSlashedName(originalRuleName, 'lower')
+
     defferedFilesWriting.push(
-      fs.writeFile(path.join(rulesFolder, `${originalRuleName}.d.ts`), compiledRule)
+      fs.writeFile(path.join(rulesFolder, `${ruleFileName}.d.ts`), compiledRule)
     )
 
-    const parsedRuleName = parseName(originalRuleName)
+    const ruleTypeAnnotationIdentifier = parseSlashedName(kebabToPascalCasing(originalRuleName), 'upper')
 
     rulesImport.push(
-      `import type { ${parsedRuleName} } from './rules/${originalRuleName}'`
+      `import type { ${ruleTypeAnnotationIdentifier} } from './rules/${ruleFileName}'`
     )
 
     rulesReassignWithinType.push(
-      `  '${gatheredOptions.rulesPrefix}${originalRuleName}': ${parsedRuleName}`
+      `  '${gatheredOptions.rulesPrefix}${originalRuleName}': ${ruleTypeAnnotationIdentifier}`
     )
   }
 
@@ -125,15 +129,15 @@ export const compileRule = async (rule: RuleAlikeWithSchema, name: string, jsttO
 
   const compiledSchemas = await Promise.all(deferredSchemasCompiling)
 
-  const schemaIdentifiersOptional = compiledSchemas.map((_, id) => `Schema${id}?`)
+  const schemaOptionalIdentifiers = compiledSchemas.map((_, id) => `Schema${id}?`)
 
   const isFirstSchemaSelfSufficient = await isSchemaSelfSufficient(compiledSchemas[0])
 
-  const typeAnnotationToExport = isFirstSchemaSelfSufficient 
-    ? `${schemaIdentifiersOptional[0].slice(0, -1)}`
-    : `[${schemaIdentifiersOptional.join(', ')}]`
+  const typeAnnotationIdentifier = isFirstSchemaSelfSufficient 
+    ? `${schemaOptionalIdentifiers[0].slice(0, -1)}`
+    : `[${schemaOptionalIdentifiers.join(', ')}]`
 
-  const compiledRuleWrapper = `export type ${name} = ${typeAnnotationToExport}`
+  const compiledRuleWrapper = `export type ${name} = ${typeAnnotationIdentifier}`
 
   return compiledSchemas.join('') + compiledRuleWrapper
 }
